@@ -1,7 +1,7 @@
 import WalletConnectProvider from "@walletconnect/web3-provider";
 //import Torus from "@toruslabs/torus-embed"
 import WalletLink from "walletlink";
-import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
+import { Alert, Button, Card, Col, Input, List, Menu, Row, Select } from "antd";
 import "antd/dist/antd.css";
 import React, { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
@@ -251,10 +251,16 @@ function App(props) {
   // 📟 Listen for broadcast events
   // const setPurposeEvents = useEventListener(readContracts, "YourCollectible", "SetPurpose", localProvider, 1);
 
+
   const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
   console.log("🤗 balance:", balance);
   const yourBalance = balance && balance.toNumber && balance.toNumber();
   const [yourCollectibles, setYourCollectibles] = useState();
+  const [country, setCountry] = useState();
+
+  const handleChange = (value) => {
+    setCountry(value) ;
+  }
 
   useEffect(() => {
     const updateYourCollectibles = async () => {
@@ -517,16 +523,55 @@ function App(props) {
                   and give you a form to interact with it locally
               */}
 
-              <div style={{ maxWidth: 820, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
-                {userSigner?(
-                  <Button type={"primary"} onClick={()=>{
-                    tx( writeContracts.YourCollectible.mintItem() )
-                  }}>MINT</Button>
-                ):(
-                  <Button type={"primary"} onClick={loadWeb3Modal}>CONNECT WALLET</Button>
-                )}
+<div><Select
+      defaultValue="Australia"
+      style={{ width: 120 }}
+      onChange={handleChange}
+      options={[
+        {
+          value: '0',
+          label: 'Argentina',
+        },
+        {
+          value: '1',
+          label: 'Australia',
+        },
+        {
+          value: '2',
+          label: 'Belgium',
+        },
+        {
+          value: '3',
+          label: 'Brazil',
+        },
+        {
+          value: '4',
+          label: 'Cameroon',
+        },
+        {
+          value: '5',
+          label: 'Canada',
+        },
+        {
+          value: '6',
+          label: 'Costa Rica',
+        },
+        {
+          value: '7',
+          label: 'Croatia',
+        },
+      ]}
+    /></div>   
 
-              </div>
+
+              <Button
+                onClick={() => {
+                 tx(writeContracts.YourCollectible.mintPayable(country, { value: ethers.utils.parseEther("0.5") }));
+                }}
+              >
+                Mint costs 0.5 ether!
+              </Button>
+
 
               <div style={{ width: 820, margin: "auto", paddingBottom: 256 }}>
                 <List
