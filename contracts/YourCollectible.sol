@@ -6,6 +6,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import './Base64.sol';
+import "hardhat/console.sol";
 
 import './HexStrings.sol';
 //learn more: https://docs.openzeppelin.com/contracts/3.x/erc721
@@ -18,40 +19,35 @@ contract YourCollectible is ERC721, Ownable {
   using HexStrings for uint160;
   using Counters for Counters.Counter;
   Counters.Counter private _tokenIds;
+  string[] public countryNames = ["Argentina", "Australia", "Belgium", "Brazil", "Cameroon", "Canada","Costa Rica","Croatia",
+  "Denmark","Ecuador","England","France","Germany","Ghana","Iran","Japan","Korea Republic","Mexico","Morocco","Netherlands","Poland","Portugal","Qatar",
+   "Saudi Arabia","Senegal","Serbia","Spain","Switzerland","Tunisia","Uruguay","USA","Wales"];
 
   constructor() public ERC721("Loogies", "LOOG") {
     // RELEASE THE LOOGIES!
   }
 
-  mapping (uint256 => uint256) public chubbiness;
+  mapping (uint256 => uint256) public countrySelected;  // maps country selected to tokenID
 
-  // 限时挖矿
-  uint256 mintDeadline = block.timestamp + 24 hours;
-
-  function mintItem()
-      public
-      returns (uint256)
+  function mintPayable( uint256 country) public payable returns (uint256)
   {
-      // 通过 require 设置有「时限性」的函数
-      require( block.timestamp < mintDeadline, "DONE MINTING");
-
-      // 线性增长
+      console.log("cccccccccountry ",country);
       _tokenIds.increment();
+        (bool sent, bytes memory data) = address(this).call{value: msg.value}("");
+        require(sent, "Failed to send Ether");
 
       uint256 id = _tokenIds.current();
       _mint(msg.sender, id);
-
-      bytes32 predictableRandom = keccak256(abi.encodePacked( blockhash(block.number-1), msg.sender, address(this) ));
-      
-      chubbiness[id] = 35+((55*uint256(uint8(predictableRandom[3])))/255);
+      countrySelected[id] = country;           // map the country selected to the NFT ID
 
       return id;
   }
 
+
   function tokenURI(uint256 id) public view override returns (string memory) {
       require(_exists(id), "not exist");
-      string memory name = string(abi.encodePacked('Loogie #',id.toString()));
-      string memory description = string(abi.encodePacked('This Loogie is the color #with a chubbiness of ',uint2str(chubbiness[id]),'!!!'));
+      string memory name = string(abi.encodePacked('BET ID #',id.toString()));
+      string memory description = string(abi.encodePacked('You selected ',countryNames[countrySelected[id]],' to win the world cup'));
       string memory image = Base64.encode(bytes(generateSVGofTokenById(id)));
 
       return
@@ -67,10 +63,9 @@ contract YourCollectible is ERC721, Ownable {
                               description,
                               '", "external_url":"https://burnyboys.com/token/',
                               id.toString(),
-                              '", "attributes": [{"trait_type": "color", "value": "#',
-                              '"},{"trait_type": "chubbiness", "value": ',
-                              uint2str(chubbiness[id]),
-                              '}], "owner":"',
+                              '", "attributes": [{"trait_type": "country", "value": "',
+                              countryNames[countrySelected[id]],
+                              '"}], "owner":"',
                               (uint160(ownerOf(id))).toHexString(20),
                               '", "image": "',
                               'data:image/svg+xml;base64,',
@@ -84,33 +79,28 @@ contract YourCollectible is ERC721, Ownable {
   }
 
   function generateSVGofTokenById(uint256 id) internal view returns (string memory) {
-
     string memory svg = string(abi.encodePacked(
       '<svg width="400" height="400" xmlns="http://www.w3.org/2000/svg">',
         renderTokenById(id),
       '</svg>'
     ));
-
     return svg;
   }
 
   // Visibility is `public` to enable it being called by other contracts for composition.
   function renderTokenById(uint256 id) public view returns (string memory) {
     string memory render = string(abi.encodePacked(
-      '<g id="eye1">',
-          '<ellipse stroke-width="3" ry="29.5" rx="29.5" id="svg_1" cy="154.5" cx="181.5" stroke="#000" fill="#fff"/>',
-          '<ellipse ry="3.5" rx="2.5" id="svg_3" cy="154.5" cx="173.5" stroke-width="3" stroke="#000" fill="#000000"/>',
-        '</g>',
-        '<g id="head">',
-          '<ellipse fill="#',
-          '" stroke-width="3" cx="204.5" cy="211.80065" id="svg_5" rx="',
-          chubbiness[id].toString(),
-          '" ry="51.80065" stroke="#000"/>',
-        '</g>',
-        '<g id="eye2">',
-          '<ellipse stroke-width="3" ry="29.5" rx="29.5" id="svg_2" cy="168.5" cx="209.5" stroke="#000" fill="#fff"/>',
-          '<ellipse ry="3.5" rx="3" id="svg_4" cy="169.5" cx="208" stroke-width="3" fill="#000000" stroke="#000"/>',
-        '</g>'
+'<svg width="550" height="550">',
+'<rect width="400" height="240" stroke="green" stroke-width="2" fill="#fff"></rect>',
+'<text x="200" y="100" alignment-baseline="middle" font-size="30" stroke-width="0" stroke="#000" text-anchor="middle">',
+countryNames[countrySelected[id]],
+'</text><text x="200" y="145" style="font-size:25px;">bet ',
+'</text><text x="100" y="40" style="font-size:30px;">'
+'⚽ Predictoor ⚽',
+'</text><text x="100" y="65" style="font-size:16px;" stroke="blue">2022 FIFA World Cup Sweepstakes</text>',
+'<text x="190" y="180" style="font-size:20px;">ID #',
+uint2str(id),
+'</text></svg>'
       ));
 
     return render;
@@ -137,4 +127,11 @@ contract YourCollectible is ERC721, Ownable {
       }
       return string(bstr);
   }
+
+ function getCountry(uint256 countryNumber) public view returns (string memory){
+           return countryNames[countryNumber];
+ } 
+  // so contract can receive ether
+  receive() external payable{}
+
 }
