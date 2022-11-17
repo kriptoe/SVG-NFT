@@ -22,24 +22,29 @@ contract YourCollectible is ERC721, Ownable {
   string[] public countryNames = ["Argentina", "Australia", "Belgium", "Brazil", "Cameroon", "Canada","Costa Rica","Croatia",
   "Denmark","Ecuador","England","France","Germany","Ghana","Iran","Japan","Korea Republic","Mexico","Morocco","Netherlands","Poland","Portugal","Qatar",
    "Saudi Arabia","Senegal","Serbia","Spain","Switzerland","Tunisia","Uruguay","USA","Wales"];
-
-  constructor() public ERC721("Loogies", "LOOG") {
-    // RELEASE THE LOOGIES!
-  }
+  uint256 priva  te winner = 99;   // 99 indicates sweepstakes is unavailable for claiming
+  uint256[32] countryTotals ;  // how many nfts perc country
 
   mapping (uint256 => uint256) public countrySelected;  // maps country selected to tokenID
+  mapping (uint256 => bool) public hasClaimed;  // to track if prize has been claimed
+
+  constructor() public ERC721("Loogies", "LOOG") {
+    // set winner to 99
+  }
 
   function mintPayable( uint256 country) public payable returns (uint256)
   {
-      console.log("cccccccccountry ",country);
+    require (balanceOf(msg.sender)==0, "You can only mint one NFT per address");
+     require (msg.value >= 0.1 ether , "Minimum cost of NFT is 1 matic");   
+    (bool sent, bytes memory data) = address(this).call{value: msg.value}("");
+    require(sent, "Failed to send Ether");     
       _tokenIds.increment();
-        (bool sent, bytes memory data) = address(this).call{value: msg.value}("");
-        require(sent, "Failed to send Ether");
 
       uint256 id = _tokenIds.current();
       _mint(msg.sender, id);
       countrySelected[id] = country;           // map the country selected to the NFT ID
-
+      countryTotals[country] = countryTotals[country] + 1;
+      hasClaimed[id]=false;
       return id;
   }
 
@@ -128,8 +133,44 @@ uint2str(id),
       return string(bstr);
   }
 
+
+  function claim() public payable 
+  {
+      uint256 nftID = tokenOfOwnerByIndex(msg.sender,0);
+       
+       require(winner !=99 , "Claiming hasn't been activated");   
+       require(countrySelected[nftID] == winner, "Your nft isnt the winning country.");
+       require(hasClaimed[nftID] == false,"You are inelgible to claim");
+       require(balanceOf(msg.sender)>0, "You don't own an NFT");
+       hasClaimed[nftID] = true;         // stops from claiming more than once
+
+       //calculate percentage of pool        (bool success, ) = recentWinner.call{value: address(this).balance}("");
+       uint256 amount = address(this).balance;
+       amount = amount  / countryTotals[winner];  // percentage of winners
+       countryTotals[winner] = countryTotals[winner] - 1;
+       console.log("amount " , amount);
+        (bool sent, ) = msg.sender.call{value: amount}("");
+        require(sent, "Failed to send balance");
+        
+     
+  }  
+
+
+ function setWinner(uint256 countryValue) public onlyOwner{
+         winner = countryValue;
+ }
+
  function getCountry(uint256 countryNumber) public view returns (string memory){
            return countryNames[countryNumber];
+ } 
+
+// returns how many nfts per country
+ function getCountryTotal(uint256 countryNumber) public view returns (uint256){
+           return countryTotals[countryNumber];
+ } 
+
+ function getWinner() public view returns (uint256){
+           return winner;
  } 
   // so contract can receive ether
   receive() external payable{}
