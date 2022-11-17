@@ -33,18 +33,13 @@ import "nprogress/nprogress.css"
 const { ethers } = require("ethers");
 /*
     Welcome to 🏗 scaffold-eth !
-
     Code:
     https://github.com/scaffold-eth/scaffold-eth
-
     Support:
     https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA
     or DM @austingriffith on twitter or telegram
-
     You should get your own Infura.io ID and put it in `constants.js`
     (this is your connection to the main Ethereum network for ENS etc.)
-
-
     🌏 EXTERNAL CONTRACTS:
     You can also bring in contract artifacts in `constants.js`
     (and then use the `useExternalContractLoader()` hook!)
@@ -257,9 +252,11 @@ function App(props) {
   const yourBalance = balance && balance.toNumber && balance.toNumber();
   const [yourCollectibles, setYourCollectibles] = useState();
   const [country, setCountry] = useState();
+  const [countryClicked, setCountryClicked] = useState(false);  // make sure a country is selected
 
   const handleChange = (value) => {
     setCountry(value) ;
+    setCountryClicked(true);
   }
 
   useEffect(() => {
@@ -276,9 +273,7 @@ function App(props) {
 /*
           const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
           console.log("ipfsHash", ipfsHash);
-
           const jsonManifestBuffer = await getFromIPFS(ipfsHash);
-
         */
           try {
             const jsonManifest = JSON.parse(jsonManifestString);
@@ -527,6 +522,7 @@ function App(props) {
       defaultValue="Australia"
       style={{ width: 120 }}
       onChange={handleChange}
+      placeholder="Select Country"
       options={[
         {
           value: '0',
@@ -565,13 +561,28 @@ function App(props) {
 
 
               <Button
-                onClick={() => {
-                 tx(writeContracts.YourCollectible.mintPayable(country, { value: ethers.utils.parseEther("0.5") }));
+               //if(countryClicked==true)  {}
+                onClick={() => {  
+                  if (countryClicked == true){
+                    tx(writeContracts.YourCollectible.mintPayable(country, { value: ethers.utils.parseEther("0.5") }));
+                  }
+                 else{
+                  alert ("You didn't select a country");
+                 }
                 }}
               >
                 Mint costs 0.5 ether!
               </Button>
 
+
+              <Button
+               //if(countryClicked==true)  {}
+                onClick={() => {  
+                    tx(writeContracts.YourCollectible.claim());
+                }}
+              >
+               CLAIM
+              </Button>
 
               <div style={{ width: 820, margin: "auto", paddingBottom: 256 }}>
                 <List
