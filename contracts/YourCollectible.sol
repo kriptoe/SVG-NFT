@@ -24,18 +24,19 @@ contract YourCollectible is ERC721, Ownable {
    "Saudi Arabia","Senegal","Serbia","Spain","Switzerland","Tunisia","Uruguay","USA","Wales"];
   uint256 private winner = 99;   // 99 indicates sweepstakes is unavailable for claiming
   uint256[32] countryTotals ;  // how many nfts perc country
+  uint256 public s_withdrawalDeadline; 
 
   mapping (uint256 => uint256) public countrySelected;  // maps country selected to tokenID
   mapping (uint256 => bool) public hasClaimed;  // to track if prize has been claimed
 
   constructor() public ERC721("Loogies", "LOOG") {
-    // set winner to 99
+    s_withdrawalDeadline = block.timestamp + 172800 seconds;  // 2 days
   }
 
   function mintPayable( uint256 country) public payable returns (uint256)
   {
     require (balanceOf(msg.sender)==0, "You can only mint one NFT per address");
-     require (msg.value >= 0.1 ether , "Minimum cost of NFT is 1 matic");   
+     require (msg.value >= 0.1 ether , "Minimum cost of NFT is 0.1 matic");   
     (bool sent, bytes memory data) = address(this).call{value: msg.value}("");
     require(sent, "Failed to send Ether");     
       _tokenIds.increment();
@@ -137,7 +138,7 @@ uint2str(id),
   function claim() public payable 
   {
       uint256 nftID = tokenOfOwnerByIndex(msg.sender,0);
-       
+       require(withdrawalTimeLeft()==0, "Sweepstakes hasn't ended yet");
        require(winner !=99 , "Claiming hasn't been activated");   
        require(countrySelected[nftID] == winner, "Your nft isnt the winning country.");
        require(hasClaimed[nftID] == false,"You are inelgible to claim");
@@ -149,6 +150,7 @@ uint2str(id),
        amount = amount  / countryTotals[winner];  // percentage of winners
        countryTotals[winner] = countryTotals[winner] - 1;
        console.log("amount " , amount);
+       hasClaimed[nftID] == true;          // prevents reclaiming
         (bool sent, ) = msg.sender.call{value: amount}("");
         require(sent, "Failed to send balance"); 
   }  
@@ -175,6 +177,27 @@ uint2str(id),
      return address(this).balance;
  }
 
+  function getDeadline() public view returns (uint256){
+     return s_withdrawalDeadline;
+ }
+
+  function withdrawalTimeLeft() public view returns (uint256 withdrawalTimeLeft) {
+    if( block.timestamp >= s_withdrawalDeadline) {
+      return (0);
+    } else {
+      return (s_withdrawalDeadline - block.timestamp);
+    }
+  }
+
+ function random(uint num) public view returns(uint){
+ return uint(keccak256(abi.encodePacked(block.timestamp,block.difficulty, 
+ msg.sender))) % num;
+ }
+
+ function execute() public payable returns(bool) {
+  require(withdrawalTimeLeft()==0, "The sweepstakes hasn't ended");
+    winner = random(32);
+ }
   // so contract can receive ether
   receive() external payable{}
 
