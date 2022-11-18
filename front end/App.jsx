@@ -29,6 +29,7 @@ import Fortmatic from "fortmatic";
 import Authereum from "authereum";
 import nProgress from "nprogress";
 import "nprogress/nprogress.css"
+import humanizeDuration from "humanize-duration";
 
 const { ethers } = require("ethers");
 /*
@@ -46,11 +47,11 @@ const { ethers } = require("ethers");
 */
 
 /// 📡 What chain are your contracts deployed to?
-const targetNetwork = NETWORKS.localhost; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
+const targetNetwork = NETWORKS.mumbai; // <------- select your target frontend network (localhost, rinkeby, xdai, mainnet)
 
 // 😬 Sorry for all the console logging
 const DEBUG = true;
-const NETWORKCHECK = true;
+const NETWORKCHECK = false;
 
 // 🛰 providers
 if (DEBUG) console.log("📡 Connecting to Mainnet Ethereum");
@@ -248,7 +249,8 @@ function App(props) {
 
   const prizePool = useContractReader(readContracts, "YourCollectible", "getContractBalance");
   const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
-  
+  const timeLeft = useContractReader(readContracts, "YourCollectible", "withdrawalTimeLeft");
+
   console.log("🤗 balance:", balance);
   const yourBalance = balance && balance.toNumber && balance.toNumber();
   const [yourCollectibles, setYourCollectibles] = useState();
@@ -521,9 +523,16 @@ function App(props) {
 
 <div>
  <h1>Predictoor BETA world cup sweepstakes pool.</h1> 
-  Select which team will win the group stage, all prize money is shared amongst the group who chose the winner.<Divider />
-  Current Prizepool {prizePool && prizePool.toNumber && ethers.utils.formatEther(prizePool) } Matic
+  Select which team will win the FIFA 2022 World Cup, all prize money is shared amongst the group who chose the winner.
+  <br />Only 1 entry per address, entry cost 0.1 Matic (it's hard to get a lot of Test Matic)
   <Divider />
+  <h2>Current Prizepool {prizePool && prizePool.toNumber && ethers.utils.formatEther(prizePool) } Matic</h2>
+  Sweepstakes closes in {timeLeft && humanizeDuration(timeLeft.toNumber() * 1000)}
+  <Divider />
+  <div style={{ padding: 8, marginTop: 16, fontWeight: "bold"}}>
+  
+</div>
+
   <Select
       defaultValue="Australia"
       style={{ width: 120 }}
@@ -562,6 +571,33 @@ function App(props) {
           value: '7',
           label: 'Croatia',
         },
+        {
+          value: '8',
+          label: 'Denmark',
+        },
+        {value: '9',label: 'Ecuador',},
+        {value: '10',label: 'England',},
+        {value: '11',label: 'France',},
+        {value: '12',label: 'Germany',}, 
+        {value: '13',label: 'Ghana',},
+        {value: '14',label: 'Iran',},
+        {value: '15',label: 'Japan',},
+        {value: '16',label: 'Korea Republic',},         
+        {value: '17',label: 'Mexico',},
+        {value: '18',label: 'Morocco',},
+        {value: '19',label: 'Netherlands',},
+        {value: '20',label: 'Poland',}, 
+        {value: '21',label: 'Portugal',},
+        {value: '22',label: 'Qatar',},
+        {value: '23',label: 'Saudi Arabia',},
+        {value: '24',label: 'Senegal',}, 
+        {value: '25',label: 'Serbia',},
+        {value: '26',label: 'Spain',},
+        {value: '27',label: 'Switzerland',},
+        {value: '28',label: 'Tunisia',}, 
+        {value: '29',label: 'Uruguay',},
+        {value: '30',label: 'USA',},
+        {value: '31',label: 'Wales',},
       ]}
     /></div>   
 
@@ -570,14 +606,14 @@ function App(props) {
                //if(countryClicked==true)  {}
                 onClick={() => {  
                   if (countryClicked == true){
-                    tx(writeContracts.YourCollectible.mintPayable(country, { value: ethers.utils.parseEther("1") }));
+                    tx(writeContracts.YourCollectible.mintPayable(country, { value: ethers.utils.parseEther("0.1") }));
                   }
                  else{
                   alert ("You didn't select a country");
                  }
                 }}
               >
-                1 Matic Entry
+                0.1 Matic Entry
               </Button>
 
 <Divider />
