@@ -22,7 +22,7 @@ contract YourCollectible is ERC721, Ownable {
   string[] public countryNames = ["Argentina", "Australia", "Belgium", "Brazil", "Cameroon", "Canada","Costa Rica","Croatia",
   "Denmark","Ecuador","England","France","Germany","Ghana","Iran","Japan","Korea Republic","Mexico","Morocco","Netherlands","Poland","Portugal","Qatar",
    "Saudi Arabia","Senegal","Serbia","Spain","Switzerland","Tunisia","Uruguay","USA","Wales"];
-  uint256 priva  te winner = 99;   // 99 indicates sweepstakes is unavailable for claiming
+  uint256 private winner = 99;   // 99 indicates sweepstakes is unavailable for claiming
   uint256[32] countryTotals ;  // how many nfts perc country
 
   mapping (uint256 => uint256) public countrySelected;  // maps country selected to tokenID
@@ -150,9 +150,7 @@ uint2str(id),
        countryTotals[winner] = countryTotals[winner] - 1;
        console.log("amount " , amount);
         (bool sent, ) = msg.sender.call{value: amount}("");
-        require(sent, "Failed to send balance");
-        
-     
+        require(sent, "Failed to send balance"); 
   }  
 
 
@@ -172,6 +170,11 @@ uint2str(id),
  function getWinner() public view returns (uint256){
            return winner;
  } 
+
+ function getContractBalance() public view returns (uint256){
+     return address(this).balance;
+ }
+
   // so contract can receive ether
   receive() external payable{}
 
