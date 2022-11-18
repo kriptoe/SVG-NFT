@@ -1,7 +1,7 @@
 import WalletConnectProvider from "@walletconnect/web3-provider";
 //import Torus from "@toruslabs/torus-embed"
 import WalletLink from "walletlink";
-import { Alert, Button, Card, Col, Input, List, Menu, Row, Select } from "antd";
+import { Alert, Button, Card, Col, Divider, Input, List, Menu, Row, Select } from "antd";
 import "antd/dist/antd.css";
 import React, { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
@@ -246,8 +246,9 @@ function App(props) {
   // 📟 Listen for broadcast events
   // const setPurposeEvents = useEventListener(readContracts, "YourCollectible", "SetPurpose", localProvider, 1);
 
-
+  const prizePool = useContractReader(readContracts, "YourCollectible", "getContractBalance");
   const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
+  
   console.log("🤗 balance:", balance);
   const yourBalance = balance && balance.toNumber && balance.toNumber();
   const [yourCollectibles, setYourCollectibles] = useState();
@@ -518,7 +519,12 @@ function App(props) {
                   and give you a form to interact with it locally
               */}
 
-<div><Select
+<div>
+ <h1>Predictoor BETA world cup sweepstakes pool.</h1> 
+  Select which team will win the group stage, all prize money is shared amongst the group who chose the winner.<Divider />
+  Current Prizepool {prizePool && prizePool.toNumber && ethers.utils.formatEther(prizePool) } Matic
+  <Divider />
+  <Select
       defaultValue="Australia"
       style={{ width: 120 }}
       onChange={handleChange}
@@ -564,17 +570,17 @@ function App(props) {
                //if(countryClicked==true)  {}
                 onClick={() => {  
                   if (countryClicked == true){
-                    tx(writeContracts.YourCollectible.mintPayable(country, { value: ethers.utils.parseEther("0.5") }));
+                    tx(writeContracts.YourCollectible.mintPayable(country, { value: ethers.utils.parseEther("1") }));
                   }
                  else{
                   alert ("You didn't select a country");
                  }
                 }}
               >
-                Mint costs 0.5 ether!
+                1 Matic Entry
               </Button>
 
-
+<Divider />
               <Button
                //if(countryClicked==true)  {}
                 onClick={() => {  
@@ -584,7 +590,7 @@ function App(props) {
                CLAIM
               </Button>
 
-              <div style={{ width: 820, margin: "auto", paddingBottom: 256 }}>
+              <div style={{ width: 520, margin: "auto", paddingBottom: 256 }}>
                 <List
                   bordered
                   dataSource={yourCollectibles}
@@ -608,33 +614,6 @@ function App(props) {
                           <div>{item.description}</div>
                         </Card>
 
-                        <div>
-                          owner:{" "}
-                          <Address
-                            address={item.owner}
-                            ensProvider={mainnetProvider}
-                            blockExplorer={blockExplorer}
-                            fontSize={16}
-                          />
-                          <AddressInput
-                            ensProvider={mainnetProvider}
-                            placeholder="transfer to address"
-                            value={transferToAddresses[id]}
-                            onChange={newValue => {
-                              const update = {};
-                              update[id] = newValue;
-                              setTransferToAddresses({ ...transferToAddresses, ...update });
-                            }}
-                          />
-                          <Button
-                            onClick={() => {
-                              console.log("writeContracts", writeContracts);
-                              tx(writeContracts.YourCollectible.transferFrom(address, transferToAddresses[id], id));
-                            }}
-                          >
-                            Transfer
-                          </Button>
-                        </div>
                       </List.Item>
                     );
                   }}
